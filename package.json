@@ -1,5 +1,5 @@
 {
-  "name": "hbminigun",
+  "name": "hbminigun-nvenc",
   "private": true,
   "version": "1.3.4",
   "main": "main.js",
@@ -27,14 +27,14 @@
     "vite": "^8.1.1"
   },
   "build": {
-    "appId": "com.endzz.hbminigun",
-    "productName": "HBMiniGun",
+    "appId": "com.local.hbminigun.nvenc",
+    "productName": "HBMiniGun NVENC",
     "directories": {
-      "output": "dist_electron"
+      "output": "dist_electron_nvenc"
     },
     "win": {
       "target": "nsis",
-      "artifactName": "HBMiniGun_v${version}.${ext}",
+      "artifactName": "HBMiniGun_NVENC_v${version}.${ext}",
       "icon": "build/icon.ico"
     },
     "icon": "build/icon.png",
@@ -49,7 +49,7 @@
       "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "HBMiniGun"
+      "shortcutName": "HBMiniGun NVENC"
     },
     "files": [
       "dist/**/*",
