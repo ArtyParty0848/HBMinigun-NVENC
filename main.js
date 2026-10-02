@@ -1314,7 +1314,10 @@ async function processNextInQueue(hbPath, settings) {
       args.push('-f', 'av_mkv');
 
       // Video options
-      const encoder = fileConfig.videoCodec === 'h265' ? 'x265' : 'x264';
+      const useNvenc = settings.videoEncoder === 'nvenc';
+      const encoder = useNvenc
+        ? (fileConfig.videoCodec === 'h265' ? 'nvenc_h265' : 'nvenc_h264')
+        : (fileConfig.videoCodec === 'h265' ? 'x265' : 'x264');
       args.push('-e', encoder);
       const rfVal = fileConfig.quality === 'auto' 
         ? calculateSmartRF(fffile, fileConfig) 
@@ -1966,13 +1969,18 @@ ipcMain.handle('generate-samples', async (event, { filePath, timestamp, codec, r
   const sampleResMap = { '2160p': { w: 3840, h: 2160 }, '1080p': { w: 1920, h: 1080 }, '720p': { w: 1280, h: 720 } };
   const sampleResDef = sampleResMap[resolution];
 
+  const sampleUseNvenc = settings.videoEncoder === 'nvenc';
+  const sampleEncoder = sampleUseNvenc
+    ? (codec === 'h265' ? 'nvenc_h265' : 'nvenc_h264')
+    : (codec === 'h265' ? 'x265' : 'x264');
+
   const sampleArgs = [
     '-i', filePath,
     '-o', samplePath,
     '--start-at', `duration:${timestamp}`,
     '--stop-at', `duration:${clipDuration}`,
     '-f', 'av_mkv',
-    '-e', codec === 'h265' ? 'x265' : 'x264',
+    '-e', sampleEncoder,
     '-q', rf.toString(),
     '--cfr'
   ];
