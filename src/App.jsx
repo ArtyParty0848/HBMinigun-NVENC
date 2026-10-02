@@ -3721,6 +3721,21 @@ function SettingsModal({ settings, setSettings, toolsState, onClose, onSave, sho
             </div>
 
             <div className="form-group">
+              <label>Video Encoder</label>
+              <select
+                className="text-input"
+                value={localSettings.videoEncoder || 'software'}
+                onChange={(e) => setLocalSettings(prev => ({ ...prev, videoEncoder: e.target.value }))}
+              >
+                <option value="software">Software (x264 / x265)</option>
+                <option value="nvenc">NVIDIA NVENC</option>
+              </select>
+              <span className="text-muted" style={{ fontSize: '10.5px', marginTop: '4px', display: 'block' }}>
+                Select whether HandBrake uses CPU software encoding or NVIDIA hardware encoding.
+              </span>
+            </div>
+
+            <div className="form-group">
               <label>Custom MediaInfo Path (Optional)</label>
               <input 
                 type="text" 
