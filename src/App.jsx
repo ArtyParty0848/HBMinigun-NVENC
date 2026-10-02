@@ -372,6 +372,12 @@ export default function App() {
     try {
       const res = await window.api.checkForUpdates();
       setIsCheckingUpdates(false);
+      if (res && res.updatesDisabled) {
+        if (!silent) {
+          showToast('Updates Disabled', 'Official updates are disabled for the local HBMiniGun NVENC build.', 'info');
+        }
+        return;
+      }
       if (res && res.hasUpdate) {
         setUpdateInfo(res);
         setUpdateModalOpen(true);

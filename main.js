@@ -2058,64 +2058,10 @@ ipcMain.handle('open-folder', (event, folderPath) => {
 });
 
 ipcMain.handle('check-for-updates', async () => {
-  try {
-    const https = require('https');
-    const options = {
-      hostname: 'api.github.com',
-      path: '/repos/EndZz-/HBMinigun/releases/latest',
-      headers: { 'User-Agent': 'HBMiniGun-Update-Checker' }
-    };
-
-    const fetchLatestRelease = () => new Promise((resolve, reject) => {
-      https.get(options, (res) => {
-        let data = '';
-        res.on('data', (chunk) => { data += chunk; });
-        res.on('end', () => {
-          if (res.statusCode === 200) {
-            resolve(JSON.parse(data));
-          } else {
-            reject(new Error(`Failed to fetch release: status code ${res.statusCode}`));
-          }
-        });
-      }).on('error', (err) => reject(err));
-    });
-
-    const release = await fetchLatestRelease();
-    const latestTag = release.tag_name;
-    const currentVersion = "v" + app.getVersion();
-
-    const cleanVersion = (v) => v.replace(/^v/, '').trim();
-    const semverCompare = (v1, v2) => {
-      const parts1 = cleanVersion(v1).split('.').map(Number);
-      const parts2 = cleanVersion(v2).split('.').map(Number);
-      for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
-        const p1 = parts1[i] || 0;
-        const p2 = parts2[i] || 0;
-        if (p1 > p2) return 1;
-        if (p1 < p2) return -1;
-      }
-      return 0;
-    };
-
-    const hasUpdate = semverCompare(latestTag, currentVersion) > 0;
-    let downloadUrl = null;
-    if (release.assets && Array.isArray(release.assets)) {
-      const asset = release.assets.find(a => a.name.toLowerCase().endsWith('.exe'));
-      if (asset) {
-        downloadUrl = asset.browser_download_url;
-      }
-    }
-
-    return {
-      hasUpdate,
-      latestVersion: latestTag,
-      releaseNotes: release.body || '',
-      downloadUrl
-    };
-  } catch (err) {
-    console.error('Update check failed:', err);
-    return { hasUpdate: false, error: err.message };
-  }
+  return {
+    hasUpdate: false,
+    updatesDisabled: true
+  };
 });
 
 ipcMain.handle('download-and-install-update', async (event, downloadUrl) => {
