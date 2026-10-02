@@ -246,6 +246,7 @@ export default function App() {
     handbrakePresetPath: '',
     handbrakePresetName: '',
     handbrakePath: '',
+    videoEncoder: 'software',
     mediaInfoPath: '',
     ffmpegPath: '',
     engines: 2,
@@ -2129,9 +2130,9 @@ export default function App() {
   };
 
   // Save Settings Modal
-  const handleSaveSettings = async (e) => {
+  const handleSaveSettings = async (e, settingsToSave = settings) => {
     e.preventDefault();
-    const success = await window.api.saveSettings(settings);
+    const success = await window.api.saveSettings(settingsToSave);
     if (success) {
       showToast('Settings Saved', 'Configuration saved successfully.', 'success');
       setSettingsOpen(false);

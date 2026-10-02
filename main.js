@@ -61,6 +61,7 @@ const defaultSettings = {
   handbrakePresetPath: '',
   handbrakePresetName: '',
   handbrakePath: '',   // Empty means check PATH or default installer locations
+  videoEncoder: 'software', // software or nvenc
   mediaInfoPath: '',   // Empty means check PATH or default installer locations
   ffmpegPath: '',      // Empty means check PATH or default installer locations
   engines: 2,
