@@ -444,6 +444,7 @@ export default function App() {
   // Custom columns / transcode config states
   const [fileConfigs, setFileConfigs] = useState({});
   const [batchVideoCodec, setBatchVideoCodec] = useState('h264');
+  const [batchEncoderSpeed, setBatchEncoderSpeed] = useState('medium');
   const [batchQuality, setBatchQuality] = useState(20);
   const [batchFramerate, setBatchFramerate] = useState('constant');
   const [batchAudioCodec, setBatchAudioCodec] = useState('AAC');
@@ -536,6 +537,7 @@ export default function App() {
           next[file.fullPath] = {
             ...next[file.fullPath],
             resolution: sourceConfig.resolution || 'original',
+            encoderSpeed: sourceConfig.encoderSpeed || 'medium',
             videoCodec: sourceConfig.videoCodec || 'h264',
             quality: sourceConfig.quality !== undefined ? sourceConfig.quality : 20,
             framerate: sourceConfig.framerate || 'constant',
@@ -676,6 +678,7 @@ export default function App() {
             framerate: batchFramerate,
             audioCodec: batchAudioCodec,
             resolution: batchResolution,
+            encoderSpeed: batchEncoderSpeed,
             audioSources: audioSources,
             subtitleSources: subtitleSources,
             // Keep legacy ones for compatibility
@@ -715,7 +718,8 @@ export default function App() {
         batchQuality,
         batchFramerate,
         batchAudioCodec,
-        batchResolution
+        batchResolution,
+        batchEncoderSpeed
       });
       const info = await window.api.hasSavedSession();
       if (info && info.hasSession) {
@@ -752,6 +756,7 @@ export default function App() {
       if (session.batchFramerate) setBatchFramerate(session.batchFramerate);
       if (session.batchAudioCodec) setBatchAudioCodec(session.batchAudioCodec);
       if (session.batchResolution) setBatchResolution(session.batchResolution);
+      if (session.batchEncoderSpeed) setBatchEncoderSpeed(session.batchEncoderSpeed);
 
       const timeStr = session.timestamp ? new Date(session.timestamp).toLocaleString() : 'last session';
       showToast(
@@ -2014,6 +2019,23 @@ export default function App() {
           </select>
         </td>
 
+        {/* Encoder Speed */}
+        <td>
+          <select
+            className="table-select"
+            value={config.encoderSpeed || 'medium'}
+            onChange={(e) => handleUpdateConfig(file.fullPath, 'encoderSpeed', e.target.value)}
+          >
+            <option value="fastest">Fastest</option>
+            <option value="faster">Faster</option>
+            <option value="fast">Fast</option>
+            <option value="medium">Medium</option>
+            <option value="slow">Slow</option>
+            <option value="slower">Slower</option>
+            <option value="slowest">Slowest</option>
+          </select>
+        </td>
+
         {/* Video Codec Selector */}
         <td>
           <select 
@@ -2531,6 +2553,7 @@ export default function App() {
 
                     {/* Transcode Options Columns */}
                     <th style={{ width: '105px' }}>Resolution</th>
+                    <th style={{ width: '105px' }}>Encoder Speed</th>
                     <th style={{ width: '90px' }}>Video Codec</th>
                     <th style={{ width: '80px' }}>Quality (RF)</th>
                     <th style={{ width: '95px' }}>Frame Rate</th>
@@ -2770,6 +2793,23 @@ export default function App() {
                       <option value="2160p">2160p (4K — 3840×2160)</option>
                       <option value="1080p">1080p (1920×1080)</option>
                       <option value="720p">720p (1280×720)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '9.5px', color: 'var(--text-muted)' }}>Encoder Speed</label>
+                    <select
+                      className="table-select"
+                      style={{ width: '100%', padding: '2px 4px', height: '24px', fontSize: '11px' }}
+                      value={batchEncoderSpeed}
+                      onChange={(e) => setBatchEncoderSpeed(e.target.value)}
+                    >
+                      <option value="fastest">Fastest</option>
+                      <option value="faster">Faster</option>
+                      <option value="fast">Fast</option>
+                      <option value="medium">Medium</option>
+                      <option value="slow">Slow</option>
+                      <option value="slower">Slower</option>
+                      <option value="slowest">Slowest</option>
                     </select>
                   </div>
                   <div>
@@ -4107,6 +4147,7 @@ function SampleModal({ file, config, onSaveConfig, onClose, showToast }) {
         codec,
         rf,
         resolution,
+        encoderSpeed: config.encoderSpeed || 'medium',
         previewDuration,
         selectedSubTrack: selectedSubTrack
       });

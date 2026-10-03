@@ -1319,6 +1319,37 @@ async function processNextInQueue(hbPath, settings) {
         ? (fileConfig.videoCodec === 'h265' ? 'nvenc_h265' : 'nvenc_h264')
         : (fileConfig.videoCodec === 'h265' ? 'x265' : 'x264');
       args.push('-e', encoder);
+
+      // Encoder speed / efficiency preset.
+      // The UI exposes one common seven-step scale and maps it
+      // to the preset names supported by the active encoder.
+      const encoderSpeed = fileConfig.encoderSpeed || 'medium';
+
+      const softwarePresetMap = {
+        fastest: 'ultrafast',
+        faster: 'veryfast',
+        fast: 'fast',
+        medium: 'medium',
+        slow: 'slow',
+        slower: 'slower',
+        slowest: 'veryslow'
+      };
+
+      const nvencPresetMap = {
+        fastest: 'fastest',
+        faster: 'faster',
+        fast: 'fast',
+        medium: 'medium',
+        slow: 'slow',
+        slower: 'slower',
+        slowest: 'slowest'
+      };
+
+      const encoderPreset = useNvenc
+        ? (nvencPresetMap[encoderSpeed] || 'medium')
+        : (softwarePresetMap[encoderSpeed] || 'medium');
+
+      args.push('--encoder-preset', encoderPreset);
       const rfVal = fileConfig.quality === 'auto' 
         ? calculateSmartRF(fffile, fileConfig) 
         : (parseInt(fileConfig.quality, 10) || 20);
@@ -1900,7 +1931,7 @@ app.on('window-all-closed', () => {
 });
 
 // Generate Sample Comparison
-ipcMain.handle('generate-samples', async (event, { filePath, timestamp, codec, rf, resolution, previewDuration, selectedSubTrack }) => {
+ipcMain.handle('generate-samples', async (event, { filePath, timestamp, codec, rf, resolution, encoderSpeed, previewDuration, selectedSubTrack }) => {
   const settings = loadSettings();
   const tools = getToolPaths(settings);
   if (!tools.handbrake) {
@@ -1974,6 +2005,32 @@ ipcMain.handle('generate-samples', async (event, { filePath, timestamp, codec, r
     ? (codec === 'h265' ? 'nvenc_h265' : 'nvenc_h264')
     : (codec === 'h265' ? 'x265' : 'x264');
 
+  const sampleSpeed = encoderSpeed || 'medium';
+
+  const sampleSoftwarePresetMap = {
+    fastest: 'ultrafast',
+    faster: 'veryfast',
+    fast: 'fast',
+    medium: 'medium',
+    slow: 'slow',
+    slower: 'slower',
+    slowest: 'veryslow'
+  };
+
+  const sampleNvencPresetMap = {
+    fastest: 'fastest',
+    faster: 'faster',
+    fast: 'fast',
+    medium: 'medium',
+    slow: 'slow',
+    slower: 'slower',
+    slowest: 'slowest'
+  };
+
+  const sampleEncoderPreset = sampleUseNvenc
+    ? (sampleNvencPresetMap[sampleSpeed] || 'medium')
+    : (sampleSoftwarePresetMap[sampleSpeed] || 'medium');
+
   const sampleArgs = [
     '-i', filePath,
     '-o', samplePath,
@@ -1981,6 +2038,7 @@ ipcMain.handle('generate-samples', async (event, { filePath, timestamp, codec, r
     '--stop-at', `duration:${clipDuration}`,
     '-f', 'av_mkv',
     '-e', sampleEncoder,
+    '--encoder-preset', sampleEncoderPreset,
     '-q', rf.toString(),
     '--cfr'
   ];
