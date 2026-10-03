@@ -247,6 +247,7 @@ export default function App() {
     handbrakePresetName: '',
     handbrakePath: '',
     videoEncoder: 'software',
+    bitDepth: 'auto',
     mediaInfoPath: '',
     ffmpegPath: '',
     engines: 2,
@@ -3778,6 +3779,22 @@ function SettingsModal({ settings, setSettings, toolsState, onClose, onSave, sho
               </select>
               <span className="text-muted" style={{ fontSize: '10.5px', marginTop: '4px', display: 'block' }}>
                 Select whether HandBrake uses CPU software encoding or NVIDIA hardware encoding.
+              </span>
+            </div>
+
+            <div className="form-group">
+              <label>Bit Depth</label>
+              <select
+                className="text-input"
+                value={localSettings.bitDepth || 'auto'}
+                onChange={(e) => setLocalSettings(prev => ({ ...prev, bitDepth: e.target.value }))}
+              >
+                <option value="auto">Auto (H.264 8-bit / H.265 10-bit)</option>
+                <option value="8bit">8-bit</option>
+                <option value="10bit">10-bit</option>
+              </select>
+              <span className="text-muted" style={{ fontSize: '10.5px', marginTop: '4px', display: 'block' }}>
+                Auto keeps H.264 at 8-bit for compatibility and uses 10-bit for H.265. NVIDIA NVENC does not support 10-bit H.264 in the bundled HandBrake build.
               </span>
             </div>
 

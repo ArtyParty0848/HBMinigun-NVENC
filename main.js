@@ -62,6 +62,7 @@ const defaultSettings = {
   handbrakePresetName: '',
   handbrakePath: '',   // Empty means check PATH or default installer locations
   videoEncoder: 'software', // software or nvenc
+  bitDepth: 'auto',         // auto, 8bit, or 10bit
   mediaInfoPath: '',   // Empty means check PATH or default installer locations
   ffmpegPath: '',      // Empty means check PATH or default installer locations
   engines: 2,
@@ -1121,6 +1122,24 @@ ipcMain.handle('start-transcode', async (event, files, config) => {
     throw new Error('HandBrakeCLI is not installed or not in PATH.');
   }
 
+  // Validate unsupported encoder / bit-depth combinations before
+  // starting the queue or staging any network files.
+  const usesCustomPreset = config && config.presetFile && config.presetName;
+
+  if (!usesCustomPreset && settings.videoEncoder === 'nvenc' && (settings.bitDepth || 'auto') === '10bit') {
+    const incompatibleFiles = (files || []).filter((file) => {
+      const fileConfig = (config && config.fileConfigs && config.fileConfigs[file.fullPath]) || {};
+      return (fileConfig.videoCodec || 'h264') !== 'h265';
+    });
+
+    if (incompatibleFiles.length > 0) {
+      return {
+        success: false,
+        message: '10-bit H.264 is not supported by NVIDIA NVENC in this HandBrake build. ' + incompatibleFiles.length + ' selected file(s) use H.264. Use Auto or 8-bit, switch those files to H.265, or use Software encoding.'
+      };
+    }
+  }
+
   // If a queue is already running, treat this as an append rather than rejecting.
   if (isTranscodingActive) {
     // Merge any per-file configs so newly added files transcode with their settings.
@@ -1315,9 +1334,30 @@ async function processNextInQueue(hbPath, settings) {
 
       // Video options
       const useNvenc = settings.videoEncoder === 'nvenc';
-      const encoder = useNvenc
-        ? (fileConfig.videoCodec === 'h265' ? 'nvenc_h265' : 'nvenc_h264')
-        : (fileConfig.videoCodec === 'h265' ? 'x265' : 'x264');
+      const bitDepth = settings.bitDepth || 'auto';
+      const codec = fileConfig.videoCodec === 'h265' ? 'h265' : 'h264';
+
+      if (bitDepth === '10bit' && useNvenc && codec === 'h264') {
+        throw new Error('10-bit H.264 is not supported by NVIDIA NVENC in this HandBrake build. Use Auto or 8-bit, switch to H.265, or use Software encoding.');
+      }
+
+      const use10Bit = bitDepth === '10bit' || (bitDepth === 'auto' && codec === 'h265');
+      let encoder;
+
+      if (useNvenc) {
+        if (codec === 'h265') {
+          encoder = use10Bit ? 'nvenc_h265_10bit' : 'nvenc_h265';
+        } else {
+          encoder = 'nvenc_h264';
+        }
+      } else {
+        if (codec === 'h265') {
+          encoder = use10Bit ? 'x265_10bit' : 'x265';
+        } else {
+          encoder = use10Bit ? 'x264_10bit' : 'x264';
+        }
+      }
+
       args.push('-e', encoder);
 
       // Encoder speed / efficiency preset.
@@ -2001,9 +2041,29 @@ ipcMain.handle('generate-samples', async (event, { filePath, timestamp, codec, r
   const sampleResDef = sampleResMap[resolution];
 
   const sampleUseNvenc = settings.videoEncoder === 'nvenc';
-  const sampleEncoder = sampleUseNvenc
-    ? (codec === 'h265' ? 'nvenc_h265' : 'nvenc_h264')
-    : (codec === 'h265' ? 'x265' : 'x264');
+  const sampleBitDepth = settings.bitDepth || 'auto';
+  const sampleCodec = codec === 'h265' ? 'h265' : 'h264';
+
+  if (sampleBitDepth === '10bit' && sampleUseNvenc && sampleCodec === 'h264') {
+    throw new Error('10-bit H.264 is not supported by NVIDIA NVENC in this HandBrake build. Use Auto or 8-bit, switch to H.265, or use Software encoding.');
+  }
+
+  const sampleUse10Bit = sampleBitDepth === '10bit' || (sampleBitDepth === 'auto' && sampleCodec === 'h265');
+  let sampleEncoder;
+
+  if (sampleUseNvenc) {
+    if (sampleCodec === 'h265') {
+      sampleEncoder = sampleUse10Bit ? 'nvenc_h265_10bit' : 'nvenc_h265';
+    } else {
+      sampleEncoder = 'nvenc_h264';
+    }
+  } else {
+    if (sampleCodec === 'h265') {
+      sampleEncoder = sampleUse10Bit ? 'x265_10bit' : 'x265';
+    } else {
+      sampleEncoder = sampleUse10Bit ? 'x264_10bit' : 'x264';
+    }
+  }
 
   const sampleSpeed = encoderSpeed || 'medium';
 
