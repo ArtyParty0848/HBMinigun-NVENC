@@ -2299,6 +2299,11 @@ export default function App() {
                   {selectedPaths.size} selected
                 </span>
               )}
+              {selectedPaths.size > 0 && (
+                <span className="badge">
+                  {formatBytes(scannedFiles.reduce((sum, file) => selectedPaths.has(file.fullPath) ? sum + (file.sizeBytes || 0) : sum, 0))}
+                </span>
+              )}
             </div>
             
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
